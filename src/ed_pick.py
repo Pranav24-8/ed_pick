@@ -13,7 +13,7 @@ from moveit_msgs.msg import (Constraints, MoveItErrorCodes,
                              PlaceAction, PlaceGoal, PlanningOptions)
 from sensor_msgs.msg import JointState
 import tf
-from iki_manipulation.recognized_object import RecognizedObject
+from ed_pick.recognized_object import RecognizedObject
 
 class EdPick:
     def __init__(self):
@@ -47,6 +47,7 @@ class EdPick:
         self.scene = PlanningSceneInterface()
 
         self.pickup_object = RecognizedObject("part")
+        self.table = EntityInfo()
 
     def get_object(self):
 
@@ -66,6 +67,12 @@ class EdPick:
         self.query_request = SimpleQueryRequest()
         self.query_request.id = self.result_update.new_ids[0]
         self.query_response = self.query_client(self.query_request)
+        rospy.wait_for_service('/ed/simple_query')
+        self.ed_simple = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
+        simpleRequest = SimpleQueryRequest()
+        simpleRequest.id = 'dinner-table'
+        self.table = self.ed_simple(simpleRequest).entities[0]
+        print self.table.pose
 
     def pick_object(self):
 
@@ -93,6 +100,18 @@ class EdPick:
         if not self.pickup(self.pickup_object, self.grasps) == -1:
             print "Executed pick action"
             self.attach_object_to_gripper(self.pickup_object)
+            self.place_location.header = tmpPoseStamped.header
+            self.place_location.pose.position.x = self.result.entityInfos[i].pose.position.x
+            self.place_location.pose.position.y = self.result.entityInfos[i].pose.position.y + 0.1
+            self.place_location.pose.position.z = self.result.entityInfos[i].pose.position.z
+            self.place_location.pose.orientation.x = self.result.entityInfos[i].pose.orientation.x
+            self.place_location.pose.orientation.y = self.result.entityInfos[i].pose.orientation.y
+            self.place_location.pose.orientation.z = self.result.entityInfos[i].pose.orientation.z
+            self.place_location.pose.orientation.w = self.result.entityInfos[i].pose.orientation.w
+            myTable = MyTable(tmpPoseStamped.header, self.table.pose, self.table.convex_hull)
+            self.place(self.recog_obj, myTable)
+            print "Executed place action"
+
 
     def add_to_planning_scene(self, recognized_object):
 

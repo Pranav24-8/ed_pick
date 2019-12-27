@@ -1,0 +1,5 @@
+<launch>
+  <!-- My Package launch file -->
+  <node pkg="ED-Pick" type="ed_pick.py" name="ed_pick" output="screen">
+  </node>
+</launch>
