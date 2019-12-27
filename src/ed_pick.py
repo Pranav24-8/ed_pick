@@ -383,6 +383,18 @@ class EdPick:
         pose_stamped.pose.position.x = point.x()
         pose_stamped.pose.position.y = point.y()
         pose_stamped.pose.position.z = point.z()
+    
+    def place(self, recognized_object, pose_stamped):
+
+        result = self.arm.place(recognized_object.name, pose_stamped)
+
+        rospy.loginfo("Place result: " + str(result))
+
+        if result == True:
+            return result
+
+        return result
+
 
 
 
